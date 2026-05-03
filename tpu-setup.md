@@ -55,12 +55,7 @@ gcloud compute firewall-rules create allow-iap-ssh --project=$PROJECT_ID --netwo
 gcloud alpha compute tpus tpu-vm ssh $TPU_NAME --project=$PROJECT_ID --zone=$ZONE --tunnel-through-iap
 ```
 
-## Python environment on the TPU VM
-
-The fastest path is `./bootstrap.sh` from this repo — it installs python3.12,
-creates the venv, runs the install order below, pulls secrets from Secret
-Manager, and wires up `~/.bashrc`. The rest of this section explains what
-the script does and why; if you just want a working VM, run the script.
+## One-time: install python3.12
 
 Ubuntu 22.04 on these TPU VMs ships with `python3.10` and `python3.11` only —
 the tunix stack needs `python3.12`. The deadsnakes PPA is preconfigured in
@@ -72,8 +67,38 @@ to fetch a prebuilt CPython from GitHub instead — no sudo, no PPA.
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 export PATH="$HOME/.local/bin:$PATH"
 uv python install 3.12
+```
+
+`bootstrap.sh` (next section) discovers this interpreter automatically via
+`uv python find 3.12`.
+
+## Python environment on the TPU VM
+
+With python3.12 installed, the fastest path is `./bootstrap.sh` from this
+repo — it creates the venv and runs the install order below. The rest of
+this section explains what the script does and why; if you just want a
+working VM, run the script.
+
+Secrets (`~/.env`) and shell wiring (`~/.bashrc` activate-on-login) are
+intentionally not handled by `bootstrap.sh` — do those once, by hand. To
+auto-activate the venv and load `~/.env` in new shells:
+
+```bash
+echo 'source ~/venvs/tunix/bin/activate' >> ~/.bashrc
+echo '[ -f ~/.env ] && set -a && source ~/.env && set +a' >> ~/.bashrc
+```
+
+To populate `~/.env` from Secret Manager (one-time, when the secret exists):
+
+```bash
+gcloud secrets versions access latest --secret=tunix-env --project=tpu-2026 > ~/.env
+chmod 600 ~/.env
+```
+
+```bash
 "$(uv python find 3.12)" -m venv ~/venvs/tunix
 source ~/venvs/tunix/bin/activate
 pip install --upgrade pip setuptools wheel
@@ -128,9 +153,18 @@ gcloud alpha compute tpus tpu-vm ssh $TPU_NAME --project=$PROJECT_ID --zone=$ZON
 gcloud alpha compute tpus tpu-vm ssh $TPU_NAME --project=$PROJECT_ID --zone=$ZONE --tunnel-through-iap
 # then on the TPU:
 source ~/venvs/tunix/bin/activate
-pip install jupyterlab    # one-time, into the venv so the kernel sees tunix/jax/flax
 jupyter lab --no-browser --port=8888 --ip=127.0.0.1
 ```
+
+`jupyterlab` and `ipykernel` are pinned in `requirements.txt`, and
+`bootstrap.sh` registers the venv as a Jupyter kernel:
+
+```bash
+python -m ipykernel install --user --name tunix --display-name "tunix"
+```
+
+So in JupyterLab, pick the **tunix** kernel (not the default `python3`) to
+get the venv with `tunix`/`jax`/`flax` available.
 
 Open the printed `http://127.0.0.1:8888/lab?token=...` URL in your laptop's browser.
 

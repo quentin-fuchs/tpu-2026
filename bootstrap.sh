@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 #
-# Bring a fresh TPU VM up to a working state:
-#   - Python 3.12 + venv at ~/venvs/tunix
-#   - tunix / jax / flax stack
-#   - secrets pulled from Google Secret Manager (optional)
-#   - venv + .env auto-loaded in interactive shells
+# Set up the tunix venv on a TPU VM that already has python3.12 installed.
+#   - Creates venv at ~/venvs/tunix
+#   - Installs the tunix / jax / flax stack
 #
-# Usage on a freshly-created VM:
+# Prereq: python3.12 must already be on PATH (or findable via `uv python
+# find 3.12`). See tpu-setup.md for the one-time install step.
+#
+# Secrets (~/.env) and shell wiring (~/.bashrc) are intentionally NOT
+# handled here — do those once, by hand, per tpu-setup.md.
+#
+# Usage:
 #   git clone https://github.com/borisbolliet/tpu-2026.git
 #   cd tpu-2026 && ./bootstrap.sh
 #
@@ -16,20 +20,22 @@ set -euo pipefail
 
 REPO_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 VENV=${VENV:-$HOME/venvs/tunix}
-SECRET_NAME=${SECRET_NAME:-tunix-env}
-PROJECT_ID=${PROJECT_ID:-tpu-2026}
 
-echo "==> Installing python3.12 via uv"
-# The deadsnakes PPA is preconfigured on these VMs but
-# ppa.launchpadcontent.net is not reachable from the internal-IP TPU subnet
-# (connection times out via Cloud NAT). uv pulls a prebuilt CPython from
-# GitHub instead, which the firewall does allow.
-if ! command -v uv >/dev/null 2>&1; then
-  curl -LsSf https://astral.sh/uv/install.sh | sh
-fi
+echo "==> Locating python3.12"
 export PATH="$HOME/.local/bin:$PATH"
-uv python install 3.12
-PYTHON312=$(uv python find 3.12)
+if command -v python3.12 >/dev/null 2>&1; then
+  PYTHON312=$(command -v python3.12)
+elif command -v uv >/dev/null 2>&1 && PYTHON312=$(uv python find 3.12 2>/dev/null); then
+  :
+else
+  echo "ERROR: python3.12 not found on PATH and uv can't locate one." >&2
+  echo "       Install it first (see tpu-setup.md), e.g.:" >&2
+  echo "         curl -LsSf https://astral.sh/uv/install.sh | sh" >&2
+  echo "         export PATH=\"\$HOME/.local/bin:\$PATH\"" >&2
+  echo "         uv python install 3.12" >&2
+  exit 1
+fi
+echo "    using $PYTHON312"
 
 if [[ ! -d "$VENV" ]]; then
   echo "==> Creating venv at $VENV"
@@ -52,24 +58,7 @@ pip install git+https://github.com/google/tunix git+https://github.com/google/qw
 pip uninstall -y flax
 pip install git+https://github.com/google/flax
 
-echo "==> Fetching secrets from Secret Manager (skipped if unavailable)"
-if command -v gcloud >/dev/null && \
-   gcloud secrets describe "$SECRET_NAME" --project="$PROJECT_ID" >/dev/null 2>&1; then
-  gcloud secrets versions access latest \
-    --secret="$SECRET_NAME" --project="$PROJECT_ID" > "$HOME/.env"
-  chmod 600 "$HOME/.env"
-  echo "    wrote ~/.env"
-else
-  echo "    secret '$SECRET_NAME' not found — create it with:"
-  echo "    gcloud secrets create $SECRET_NAME --data-file=<file> --project=$PROJECT_ID"
-fi
+echo "==> Registering Jupyter kernel 'tunix'"
+python -m ipykernel install --user --name tunix --display-name "tunix"
 
-echo "==> Wiring venv + .env + uv into ~/.bashrc"
-grep -qF 'export PATH="$HOME/.local/bin:$PATH"' "$HOME/.bashrc" 2>/dev/null \
-  || echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
-grep -qF "source $VENV/bin/activate" "$HOME/.bashrc" 2>/dev/null \
-  || echo "source $VENV/bin/activate" >> "$HOME/.bashrc"
-grep -qF "set -a; source ~/.env; set +a" "$HOME/.bashrc" 2>/dev/null \
-  || echo '[ -f ~/.env ] && set -a && source ~/.env && set +a' >> "$HOME/.bashrc"
-
-echo "==> Done. Open a new shell or:  source ~/.bashrc"
+echo "==> Done. Activate the venv with:  source $VENV/bin/activate"
