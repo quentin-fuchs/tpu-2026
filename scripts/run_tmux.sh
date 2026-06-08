@@ -10,8 +10,8 @@
 set -euo pipefail
 
 SESSION=tunix
-REPO=/home/boris_bolliet_cmbagent_community/tpu-2026
-VENV=/home/boris_bolliet_cmbagent_community/venvs/tunix
+REPO=~/tpu-2026
+VENV=~/venvs/tunix
 WANDB_RUN_ID="${WANDB_RUN_ID:-bnh9ttlt}"   # the run that was interrupted
 
 if tmux has-session -t "$SESSION" 2>/dev/null; then
