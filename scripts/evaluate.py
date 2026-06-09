@@ -9,6 +9,8 @@ Run as:
     python evaluate.py
 """
 import argparse
+import json
+import time
 
 from tqdm.auto import tqdm
 from tunix.generate import sampler as sampler_lib
@@ -96,6 +98,8 @@ def main():
                          "Omit to evaluate the base model only.")
     ap.add_argument("--step", type=int, default=0,
                     help="Checkpoint step to load. 0 = latest (default).")
+    ap.add_argument("--output", default=None,
+                    help="Save results to this JSON file.")
     args = ap.parse_args()
 
     mesh = build_mesh()
@@ -127,6 +131,22 @@ def main():
     )
     n, t, acc, pacc, facc = evaluate(test_ds, sampler, eos_tokens, **GENERATION_CONFIGS[args.preset])
     print(f"\nFINAL: correct={n}/{t}  acc={acc:.2f}%  partial={pacc:.2f}%  format={facc:.2f}%")
+
+    if args.output:
+        results = {
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "checkpoint": args.ckpt_dir,
+            "step": step if args.ckpt_dir else None,
+            "preset": args.preset,
+            "correct": n,
+            "total": t,
+            "accuracy": round(acc, 4),
+            "partial_accuracy": round(pacc, 4),
+            "format_accuracy": round(facc, 4),
+        }
+        with open(args.output, "w") as f:
+            json.dump(results, f, indent=2)
+        print(f"Results saved to {args.output}")
 
 
 if __name__ == "__main__":
