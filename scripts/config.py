@@ -45,7 +45,7 @@ NUM_GENERATIONS = 2        # G in the GRPO paper — group size for advantage no
 
 # ====== GRPO loss ======
 NUM_ITERATIONS = 1         # mu — PPO-style inner optimisation passes per batch
-BETA = 0.08                # KL penalty coefficient (anchors to reference model)
+BETA = 0.2                # KL penalty coefficient (anchors to reference model)
 EPSILON = 0.2              # PPO-style clip range
 
 # ====== Training ======
@@ -70,9 +70,9 @@ MAX_GRAD_NORM = 0.1        # tight clipping keeps KL well-behaved
 # Resolving HOME directory
 HOME = os.path.expanduser("~")
 
-INTERMEDIATE_CKPT_DIR = f"{HOME}/results/intermediate_ckpt/"
-CKPT_DIR = f"{HOME}/results/ckpts/"
-TENSORBOARD_DIR = f"{HOME}/results/tensorboard/grpo"
+INTERMEDIATE_CKPT_DIR = f"{HOME}/results_update1/intermediate_ckpt/"
+CKPT_DIR = f"{HOME}/results_update1/ckpts/"
+TENSORBOARD_DIR = f"{HOME}/results_update1/tensorboard/grpo"
 SAVE_INTERVAL_STEPS = 500
 MAX_TO_KEEP = 4
 
