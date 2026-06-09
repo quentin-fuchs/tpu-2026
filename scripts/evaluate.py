@@ -31,6 +31,7 @@ from config import (
 from data import SYSTEM_PROMPT, TEMPLATE, build_train_val_test
 from model import build_mesh, download_weights, load_base_model, get_lora_model, load_lora_checkpoint, load_tokenizer, model_config_for
 from rewards import match_format, match_numbers
+from train import login_services
 
 
 def generate(question, sampler, eos_tokens, temperature=0.7, top_k=50, top_p=0.95, seed=None):
@@ -102,6 +103,8 @@ def main():
                     help="Save results to this JSON file.")
     args = ap.parse_args()
 
+    login_services()
+    
     mesh = build_mesh()
     local_path, eos_tokens = download_weights()
     base, cfg = load_base_model(local_path, mesh)
