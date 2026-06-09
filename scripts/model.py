@@ -16,6 +16,7 @@ import qwix
 from flax import nnx
 from huggingface_hub import snapshot_download
 from tunix.generate import tokenizer_adapter as tokenizer_lib
+from tunix.sft.checkpoint_manager import CheckpointManager
 from tunix.models.gemma3 import model as gemma_lib
 from tunix.models.gemma3 import params_safetensors as params_safetensors_lib
 
@@ -82,6 +83,20 @@ def get_lora_model(base_model, mesh):
         sharded = jax.lax.with_sharding_constraint(state, pspecs)
         nnx.update(lora_model, sharded)
     return lora_model
+
+
+def load_lora_checkpoint(lora_model, ckpt_dir: str, step: int | None = None):
+    """Restore LoRA adapter weights from a tunix checkpoint.
+
+    ckpt_dir should be the directory that contains numbered step subdirectories,
+    e.g. /home/.../results/ckpts/actor
+    """
+    mgr = CheckpointManager(root_directory=ckpt_dir)
+    n, _ = mgr.maybe_restore(model=lora_model, step=step, restore_only_lora_params=True)
+    if n == 0:
+        raise RuntimeError(f"No checkpoint found under {ckpt_dir}.")
+    print(f"Loaded LoRA checkpoint step={n} from {ckpt_dir}")
+    return lora_model, n
 
 
 def load_tokenizer(eos_tokens: list[int]):

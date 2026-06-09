@@ -76,7 +76,7 @@ correctness reward in W&B as the real success metric.
 | `config.py`       | All hyperparameters and paths. Single source of truth. |
 | `data.py`         | GSM8K loading, prompt template, train/val/test split. |
 | `rewards.py`      | The four reward functions and the regexes that parse outputs. |
-| `model.py`        | Download Gemma weights, build the JAX mesh, wrap with LoRA, load tokenizer. |
+| `model.py`        | Download Gemma weights, build the JAX mesh, wrap with LoRA, load tokenizer, restore LoRA checkpoint (`load_lora_checkpoint` — shared by `evaluate.py` and `chat.py`). |
 | `evaluate.py`     | Standalone evaluation: accuracy / partial accuracy / format accuracy. |
 | `chat.py`         | Interactive REPL that loads a checkpoint and lets you prompt the trained policy. |
 | `train.py`        | Main entry point: assembles the RL cluster and runs `GRPOLearner.train`. |
@@ -219,12 +219,27 @@ What to look for:
 
 ## 9. Standalone evaluation
 
-To benchmark the *base* model (no training) before/after a run:
 ```bash
+# Base model only (deterministic baseline)
 python evaluate.py --preset greedy
+
+# Finetuned model — latest checkpoint
+python evaluate.py --preset greedy --ckpt-dir /path/to/ckpts/actor
+
+# Finetuned model — specific step
+python evaluate.py --preset greedy --ckpt-dir /path/to/ckpts/actor --step 2500
 ```
-Greedy decoding gives a deterministic number you can compare against. Use
-`--preset standard` for a sampling-based estimate.
+
+Flags:
+
+| Flag          | Default  | Purpose                                                              |
+|---------------|----------|----------------------------------------------------------------------|
+| `--preset`    | `greedy` | One of `greedy` / `standard` / `liberal`. Greedy gives a deterministic number for comparisons. |
+| `--ckpt-dir`  | _(none)_ | Directory containing per-step checkpoint subdirs (e.g. `.../ckpts/actor`). Omit to evaluate the base model only. |
+| `--step N`    | `0`      | Checkpoint step to restore. `0` = latest.                           |
+| `--source`    | `tfds`   | Dataset source: `tfds` or `kaggle`.                                 |
+
+Three numbers are reported: `accuracy` (exact match), `partial_accuracy` (within 10 %), and `format_accuracy` (template parses).
 
 ## 10. Interactive chat with a trained checkpoint
 
@@ -234,7 +249,7 @@ the LoRA adapter from a chosen step, builds a sampler, and gives you a REPL.
 ```bash
 cd ~/tpu-2026/scripts
 source ~/venvs/tunix/bin/activate
-python chat.py                          # default: step 3364, standard preset, GSM8K template on
+python chat.py                          # default: step 3364, preset, GSM8K template on
 python chat.py --step 3000 --preset greedy
 python chat.py --no-template            # plain prompting, no GSM8K wrapping
 python chat.py --no-restore             # base model only — useful as a sanity baseline

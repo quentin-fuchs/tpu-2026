@@ -13,6 +13,7 @@ Tunix's RLCluster uses Orbax and will pick up the latest step in CKPT_DIR.
 """
 import argparse
 import os
+import time
 
 import nest_asyncio
 import optax
@@ -133,6 +134,7 @@ def build_cluster_config(mesh, optimizer, eos_tokens):
 
 
 def main():
+    setup_time = time.time()
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", default=DATA_SOURCE, choices=["tfds", "kaggle"])
     ap.add_argument("--wandb-run-id", default=WANDB_RUN_ID,
@@ -170,9 +172,19 @@ def main():
     )
     trainer = GRPOLearner(rl_cluster=rl_cluster, reward_fns=REWARD_FNS, algo_config=grpo_cfg)
 
+    # setup finished
+    setup_time = time.time() - setup_time
+    print(f"Setup time: {setup_time:.2f} seconds.")
+    wandb.log({"setup_time_seconds": setup_time})
+
+    start_time = time.time()
     print(f"Starting GRPO training. CKPT_DIR={CKPT_DIR}  MAX_STEPS={MAX_STEPS}")
     trainer.train(train_ds, val_ds)
-    print("Training finished.")
+    end_time = time.time()
+    print(f"Training finished. Time taken: {end_time - start_time:.2f} seconds.")
+    print(f"Setup time: {setup_time:.2f} seconds.")
+    wandb.log({"training_time_seconds": end_time - start_time})
+
 
 
 if __name__ == "__main__":

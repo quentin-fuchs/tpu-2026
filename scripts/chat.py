@@ -22,7 +22,6 @@ import os
 
 from dotenv import load_dotenv
 from tunix.generate import sampler as sampler_lib
-from tunix.sft.checkpoint_manager import CheckpointManager
 
 from config import GENERATION_CONFIGS, MAX_PROMPT_LENGTH, TOTAL_GENERATION_STEPS
 from data import SYSTEM_PROMPT, TEMPLATE
@@ -31,23 +30,12 @@ from model import (
     download_weights,
     get_lora_model,
     load_base_model,
+    load_lora_checkpoint,
     load_tokenizer,
 )
 
 DEFAULT_CKPT_ROOT = os.path.expanduser("~/tpu-2026/ckpts_backup/actor")
 DEFAULT_STEP = 3364
-
-
-def restore_lora(lora_model, ckpt_root: str, step: int | None) -> int:
-    mgr = CheckpointManager(root_directory=ckpt_root)
-    n, _ = mgr.maybe_restore(model=lora_model, step=step, restore_only_lora_params=True)
-    if n == 0:
-        raise RuntimeError(
-            f"No checkpoint found under {ckpt_root}. "
-            f"Pass --ckpt-dir or check `ls {ckpt_root}`."
-        )
-    print(f"Restored LoRA params from step {n}")
-    return n
 
 
 def make_sampler(lora, tokenizer, cfg, max_tokens: int):
@@ -101,7 +89,7 @@ def main():
 
     if not args.no_restore:
         step = None if args.step == 0 else args.step
-        restore_lora(lora, args.ckpt_dir, step)
+        load_lora_checkpoint(lora, args.ckpt_dir, step)
     else:
         print("Skipping checkpoint restore — using base model.")
 
@@ -153,7 +141,7 @@ def main():
             except (IndexError, ValueError):
                 print("usage: /step 3364")
                 continue
-            restore_lora(lora, args.ckpt_dir, None if new_step == 0 else new_step)
+            load_lora_checkpoint(lora, args.ckpt_dir, None if new_step == 0 else new_step)
             continue
 
         prompt = (
