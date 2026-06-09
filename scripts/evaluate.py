@@ -27,7 +27,7 @@ from config import (
     DATA_SOURCE,
 )
 from data import SYSTEM_PROMPT, TEMPLATE, build_train_val_test
-from model import build_mesh, download_weights, load_base_model, get_lora_model, load_tokenizer, model_config_for
+from model import build_mesh, download_weights, load_base_model, get_lora_model, load_lora_checkpoint, load_tokenizer, model_config_for
 from rewards import match_format, match_numbers
 
 
@@ -90,12 +90,24 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--preset", default="greedy", choices=list(GENERATION_CONFIGS))
     ap.add_argument("--source", default=DATA_SOURCE, choices=["tfds", "kaggle"])
+    ap.add_argument("--ckpt-dir", default=None,
+                    help="Directory containing per-step checkpoint subdirs "
+                         "(e.g. /home/.../results/ckpts/actor). "
+                         "Omit to evaluate the base model only.")
+    ap.add_argument("--step", type=int, default=0,
+                    help="Checkpoint step to load. 0 = latest (default).")
     args = ap.parse_args()
 
     mesh = build_mesh()
     local_path, eos_tokens = download_weights()
     base, cfg = load_base_model(local_path, mesh)
     lora = get_lora_model(base, mesh)
+    if args.ckpt_dir:
+        step = None if args.step == 0 else args.step
+        lora, step = load_lora_checkpoint(lora, args.ckpt_dir, step)
+        print(f"Evaluating finetuned model (step={step})")
+    else:
+        print("Evaluating base model (no checkpoint loaded)")
     tokenizer, eos_tokens = load_tokenizer(eos_tokens)
 
     _, _, test_ds = build_train_val_test(
