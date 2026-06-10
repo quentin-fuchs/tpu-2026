@@ -45,7 +45,7 @@ NUM_GENERATIONS = 2       # G in the GRPO paper — group size for advantage nor
 
 # ====== GRPO loss ======
 NUM_ITERATIONS = 1         # mu — PPO-style inner optimisation passes per batch
-BETA = 0.04                # KL penalty coefficient (anchors to reference model)
+BETA = 0.12                # KL penalty coefficient (anchors to reference model)
 EPSILON = 0.2              # PPO-style clip range
 
 # ====== Training ======
