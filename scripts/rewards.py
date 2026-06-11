@@ -69,7 +69,7 @@ def check_answer(prompts, completions, answer, **kwargs):
     scores = []
     for guess, true in zip(extracted, answer):
         if guess is None:
-            scores.append(-1.5) #Updated to worse than a bad guess
+            scores.append(0.0) #Reverting to 0
             continue
         if guess == true:
             scores.append(3.0)
