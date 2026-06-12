@@ -68,7 +68,7 @@ MAX_GRAD_NORM = 0.1        # tight clipping keeps KL well-behaved
 # ====== Reward Scaling ======
 REWARD_SCALES = {
     "match_format_exactly": 1.0,
-    "match_format_approximately": 0.5,
+    "match_format_approximately": 0.75,
     "check_answer": 1.0,
     "check_numbers": 1.0,
 }
