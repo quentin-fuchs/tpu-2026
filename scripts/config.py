@@ -41,7 +41,7 @@ TOTAL_GENERATION_STEPS = 768
 TEMPERATURE = 0.9          # high enough that the G samples actually differ
 TOP_P = 1.0
 TOP_K = 50
-NUM_GENERATIONS = 2       # G in the GRPO paper — group size for advantage norm
+NUM_GENERATIONS = 4       # G in the GRPO paper — group size for advantage norm
 
 # ====== GRPO loss ======
 NUM_ITERATIONS = 1         # mu — PPO-style inner optimisation passes per batch
@@ -68,8 +68,8 @@ MAX_GRAD_NORM = 0.1        # tight clipping keeps KL well-behaved
 # ====== Reward Scaling ======
 REWARD_SCALES = {
     "match_format_exactly": 1.0,
-    "match_format_approximately": 0.8,
-    "check_answer": 1.2,
+    "match_format_approximately": 1.0,
+    "check_answer": 1.0,
     "check_numbers": 1.0,
 }
 
