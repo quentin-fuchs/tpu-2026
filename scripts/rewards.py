@@ -20,7 +20,7 @@ from comparing siblings drawn from the same prompt.
 import re
 
 from data import reasoning_start, reasoning_end, solution_start, solution_end
-
+from config import REWARD_SCALES
 
 match_format = re.compile(
     rf"^[\s]{{0,}}"
@@ -69,7 +69,7 @@ def check_answer(prompts, completions, answer, **kwargs):
     scores = []
     for guess, true in zip(extracted, answer):
         if guess is None:
-            scores.append(0)
+            scores.append(0.0) #Reverting to 0
             continue
         if guess == true:
             scores.append(3.0)
@@ -116,4 +116,49 @@ def check_numbers(prompts, completions, answer, **kwargs):
     return scores
 
 
-REWARD_FNS = [match_format_exactly, match_format_approximately, check_answer, check_numbers]
+# ====== Reward scaling ======
+# These are relative importance weights.
+# Increasing one makes that reward matter more, but the final total max
+# is still normalised to 10.
+
+
+# Maximum raw reward each function can return.
+REWARD_MAXIMA = {
+    "match_format_exactly": 3.0,
+    "match_format_approximately": 2.5,
+    "check_answer": 3.0,
+    "check_numbers": 1.5,
+}
+
+TARGET_MAX_REWARD = 10.0
+
+
+def scaled_reward_fn(fn):
+    """Wrap a reward function with a relative scale while keeping total max at 10."""
+    name = fn.__name__
+
+    weighted_max_total = sum(
+        REWARD_SCALES[k] * REWARD_MAXIMA[k]
+        for k in REWARD_SCALES
+    )
+
+    if weighted_max_total <= 0:
+        raise ValueError("Weighted maximum reward must be positive.")
+
+    normalisation = TARGET_MAX_REWARD / weighted_max_total
+    scale = REWARD_SCALES[name] * normalisation
+
+    def wrapper(prompts, completions, **kwargs):
+        raw_scores = fn(prompts, completions, **kwargs)
+        return [scale * s for s in raw_scores]
+
+    wrapper.__name__ = name
+    return wrapper
+
+
+REWARD_FNS = [
+    scaled_reward_fn(match_format_exactly),
+    scaled_reward_fn(match_format_approximately),
+    scaled_reward_fn(check_answer),
+    scaled_reward_fn(check_numbers),
+]

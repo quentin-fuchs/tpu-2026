@@ -41,16 +41,17 @@ TOTAL_GENERATION_STEPS = 768
 TEMPERATURE = 0.9          # high enough that the G samples actually differ
 TOP_P = 1.0
 TOP_K = 50
-NUM_GENERATIONS = 2        # G in the GRPO paper — group size for advantage norm
+NUM_GENERATIONS = 8       # G in the GRPO paper — group size for advantage norm
 
 # ====== GRPO loss ======
 NUM_ITERATIONS = 1         # mu — PPO-style inner optimisation passes per batch
-BETA = 0.2                # KL penalty coefficient (anchors to reference model)
+BETA = 0.12                # KL penalty coefficient (anchors to reference model)
 EPSILON = 0.2              # PPO-style clip range
 
 # ====== Training ======
 TRAIN_MICRO_BATCH_SIZE = 1
 NUM_BATCHES = 3738
+VAL_BATCHES = 64 
 NUM_TEST_BATCHES = 64
 EVAL_EVERY_N_STEPS = 64
 NUM_EPOCHS = 1
@@ -64,15 +65,22 @@ WEIGHT_DECAY = 0.1
 WARMUP_STEPS = 0.1 * MAX_STEPS
 MAX_GRAD_NORM = 0.1        # tight clipping keeps KL well-behaved
 
+# ====== Reward Scaling ======
+REWARD_SCALES = {
+    "match_format_exactly": 1.0,
+    "match_format_approximately": 0.75,
+    "check_answer": 1.0,
+    "check_numbers": 1.0,
+}
+
 # ====== Checkpointing ======
 # NOTE: /tmp is volatile. For long runs, point this at persistent storage.
-
 # Resolving HOME directory
 HOME = os.path.expanduser("~")
-
-INTERMEDIATE_CKPT_DIR = f"{HOME}/results_update1/intermediate_ckpt/"
-CKPT_DIR = f"{HOME}/results_update1/ckpts/"
-TENSORBOARD_DIR = f"{HOME}/results_update1/tensorboard/grpo"
+RUN_NAME = os.environ.get("RUN_NAME", "default")
+INTERMEDIATE_CKPT_DIR = f"{HOME}/results/{RUN_NAME}/intermediate_ckpt/"
+CKPT_DIR = f"{HOME}/results/{RUN_NAME}/ckpts/"
+TENSORBOARD_DIR = f"{HOME}/results/{RUN_NAME}/tensorboard/grpo"
 SAVE_INTERVAL_STEPS = 500
 MAX_TO_KEEP = 4
 

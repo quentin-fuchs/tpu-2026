@@ -17,6 +17,8 @@ import grain
 import kagglehub
 import tensorflow_datasets as tfds
 
+from config import VAL_BATCHES 
+
 # Special tokens used by the policy and parsed by the reward fns.
 reasoning_start = "<reasoning>"
 reasoning_end = "</reasoning>"
@@ -112,7 +114,11 @@ def build_train_val_test(num_batches: int,
     else:
         cut = int(len(full) * train_fraction)
         train_ds = full[:cut].repeat(num_epochs)
+
+    if VAL_BATCHES == None:
         val_ds = full[cut:].repeat(num_epochs)
+    else:
+        val_ds = full[cut:cut + VAL_BATCHES].repeat(num_epochs) 
 
     test_ds = get_dataset(test_dir, "test", source).batch(train_micro_batch_size)[:num_test_batches]
     return train_ds, val_ds, test_ds
