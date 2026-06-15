@@ -1,0 +1,19 @@
+model,accuracy,partial_accuracy,format_accuracy,training_time,commit,beta_param,weighting,comment
+eval_finetuned_baseline,6.2168,6.3685,11.7513,4:57:20,aa3dd16,0.08,,
+eval_finetuned_increase_beta,0.0,0.0,0.0,3:41:49,002f09d,0.2,,
+eval_finetuned_reward_scaling_1,0.4549,1.1372,13.7225,0:57:34,e4cc1d7,0.12,"match_format_exactly: 1.0 | match_format_approximately: 0.5 | check_answer: 1.0 | check_numbers: 1.0",no response back to 0
+eval_finetuned_reward_scaling_2,35.4056,38.2108,52.0849,1:15:41,c8cc052,0.12,"match_format_exactly: 1.0 | match_format_approximately: 0.5 | check_answer: 2.0 | check_numbers: 1.0",
+eval_finetuned_reward_scaling_3,0.5307,0.6823,0.0758,0:44:19,03baefb,0.12,"match_format_exactly: 0.5 | match_format_approximately: 0.5 | check_answer: 2.5 | check_numbers: 1.0",
+eval_finetuned_test_1,44.2002,47.536,73.0857,1:09:33,,,,
+eval_finetuned_update_G,52.1607,54.7384,89.9924,4:27:38,11c79db,0.08,G=4 from 2,improved a lot
+eval_finetuned_update_answers_reward_1,0.0,0.0,0.0,0:32:05,e456066,0.12,"scores to -1.5 from 0 for no answer | match_format_exactly: 1.0 | match_format_approximately: 1.0 | check_answer: 1.0 | check_numbers: 1.0",
+eval_finetuned_update_beta_4,7.7331,8.7187,82.4867,1:06:23,a36d6af,0.04,,First with evalset 64
+eval_finetuned_update_beta_5,44.2002,47.536,73.0857,1:09:31,74a4c3a,0.12,,
+eval_finetuned_update_beta_6,0.0758,0.0758,0.0,0:32:09,2934b60,0.10,,Answered None?
+eval_finetuned_update_beta_7,20.1668,22.8203,59.5148,0:54:08,d331b70,0.14,,
+eval_raw_model,47.3844,49.9621,4.0182,,,,,
+reward_scaling_4,0.0,0.0,0.0,2:24:44,0b605bf,0.12,"G=2 | match_format_exactly: 1.0 | match_format_approximately: 0.8 | check_answer: 1.2 | check_numbers: 1.0",
+reward_scaling_5,53.0705,55.7998,87.1873,2:26:11,8019caa,0.12,"G=8 | match_format_exactly: 1.0 | match_format_approximately: 0.5 | check_answer: 1.0 | check_numbers: 1.0",
+reward_scaling_6,55.1175,57.6194,93.2525,2:10:13,4e35969,0.12,"G=8 | match_format_exactly: 1.0 | match_format_approximately: 0.75 | check_answer: 1.0 | check_numbers: 1.0",
+update_G_2,53.1463,55.9515,87.9454,1:48:12,650df70,0.12,"G=4 | match_format_exactly: 1.0 | match_format_approximately: 1.0 | check_answer: 1.0 | check_numbers: 1.0",
+update_G_3,53.0705,56.1031,93.1008,2:10:18,6944b1e,0.12,"G=8 | match_format_exactly: 1.0 | match_format_approximately: 1.0 | check_answer: 1.0 | check_numbers: 1.0",
